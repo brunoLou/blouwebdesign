@@ -2358,5 +2358,193 @@ RESPONSIVE;
   </div>
 </footer>
 
+<script>
+(function(){
+  // == SCROLL REVEAL ==
+  document.querySelectorAll('[data-framer-scroll-appear]').forEach(function(el){
+    el.classList.add('reveal');
+  });
+  var hero=document.querySelector('[data-framer-stagger]');
+  if(hero){
+    var stg=parseInt(hero.getAttribute('data-framer-stagger'))||120;
+    hero.querySelectorAll('[data-framer-enter]').forEach(function(el,i){
+      el.classList.add('reveal');
+      el.style.transitionDelay=(i*stg)+'ms';
+    });
+  }
+  if('IntersectionObserver' in window){
+    var io=new IntersectionObserver(function(entries){
+      entries.forEach(function(e){
+        if(e.isIntersecting){e.target.classList.add('in');if(e.target.dataset.scrollOnce!==undefined)io.unobserve(e.target);}
+      });
+    },{threshold:0.08,rootMargin:'0px 0px -50px 0px'});
+    document.querySelectorAll('.reveal').forEach(function(el){io.observe(el);});
+  } else {
+    document.querySelectorAll('.reveal').forEach(function(el){el.classList.add('in');});
+  }
+  setTimeout(function(){
+    document.querySelectorAll('[data-framer-enter]').forEach(function(el){el.classList.add('in');});
+  },80);
+
+  // == STARFIELD ==
+  var sky=document.querySelector('.skyfield');
+  if(sky){
+    var cv=document.createElement('canvas');
+    cv.style.cssText='width:100%;height:100%;display:block;';
+    sky.appendChild(cv);
+    var cx=cv.getContext('2d');
+    var W,H,stars=[],comets=[];
+    function resize(){W=cv.width=innerWidth;H=cv.height=innerHeight;}
+    resize();
+    addEventListener('resize',resize);
+    for(var i=0;i<180;i++){
+      stars.push({x:Math.random(),y:Math.random(),r:Math.random()*1.1+0.2,a:Math.random(),da:(Math.random()-0.5)*0.005});
+    }
+    function addComet(){
+      var ang=Math.PI/6+(Math.random()-0.5)*0.4;
+      var spd=2+Math.random()*3;
+      comets.push({x:Math.random()*0.6,y:Math.random()*0.35,vx:Math.cos(ang)*spd/1000,vy:Math.sin(ang)*spd/1000,len:90+Math.random()*120,a:1});
+      setTimeout(addComet,2800+Math.random()*4500);
+    }
+    setTimeout(addComet,1000);
+    function frame(){
+      cx.clearRect(0,0,W,H);
+      stars.forEach(function(s){
+        s.a+=s.da;if(s.a>0.95||s.a<0.08)s.da*=-1;
+        cx.beginPath();cx.arc(s.x*W,s.y*H,s.r,0,6.283);
+        cx.fillStyle='rgba(200,225,255,'+(s.a*0.65)+')';cx.fill();
+      });
+      comets=comets.filter(function(c){
+        c.x+=c.vx;c.y+=c.vy;c.a-=0.008;
+        var x=c.x*W,y=c.y*H,mag=Math.sqrt(c.vx*c.vx+c.vy*c.vy);
+        var g=cx.createLinearGradient(x,y,x-c.len*(c.vx/mag),y-c.len*(c.vy/mag));
+        g.addColorStop(0,'rgba(180,230,255,'+c.a+')');g.addColorStop(1,'rgba(180,230,255,0)');
+        cx.beginPath();cx.moveTo(x,y);cx.lineTo(x-c.len*(c.vx/mag),y-c.len*(c.vy/mag));
+        cx.strokeStyle=g;cx.lineWidth=1.5;cx.stroke();
+        return c.a>0&&c.x<1.3;
+      });
+      requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  // == FAQ ==
+  var faqSlot=document.querySelector('.faq__slot');
+  if(faqSlot){
+    var qs=[
+      ['Combien coûte un site web sur-mesure ?','Les tarifs varient selon la complexité et les fonctionnalités. Une vitrine essentielle commence autour de 890 €. Utilise le simulateur ci-dessus pour estimer ton projet en quelques clics — devis gratuit, sans engagement.'],
+      ['Combien de temps faut-il pour créer mon site ?','En général 3 à 6 semaines selon la formule choisie et la disponibilité de tes contenus. La phase la plus longue est souvent la collecte des textes et photos. Une fois les éléments rassemblés, la réalisation est rapide.'],
+      ['Avec quels outils travailles-tu ?','Principalement Webflow pour les sites vitrines avec CMS, et du code sur-mesure pour les projets plus complexes ou orientés performance. L\'outil est toujours choisi selon tes besoins réels, pas selon mes habitudes.'],
+      ['Que se passe-t-il après la livraison ?','Tu reçois un site clé en main, optimisé et documenté. Je propose des formules de maintenance et d\'accompagnement pour les mises à jour, le suivi SEO et les évolutions futures. Tu n\'es jamais livré à toi-même.'],
+      ['Je n\'ai pas encore d\'idée précise — tu peux m\'aider ?','Absolument. Une grande partie de mon travail consiste à écouter ton projet et à le traduire en décisions visuelles et techniques. Tu n\'as pas besoin d\'arriver avec un brief complet — une idée, une envie, un problème suffisent.'],
+      ['Est-ce que tu t\'occupes du référencement (SEO) ?','Tous mes sites sont livrés avec un SEO technique solide en standard : balises, vitesse de chargement, structure sémantique. Pour un travail éditorial approfondi (mots-clés, contenu, netlinking), c\'est une option disponible selon tes objectifs.']
+    ];
+    faqSlot.innerHTML='<div class="faq">'+qs.map(function(q){
+      return '<div class="qa"><button class="qa__q" type="button">'+q[0]+'<span class="qa__sign"></span></button><div class="qa__a"><div class="qa__a-inner">'+q[1]+'</div></div></div>';
+    }).join('')+'</div>';
+    faqSlot.addEventListener('click',function(e){
+      var btn=e.target.closest('.qa__q');if(!btn)return;
+      var qa=btn.closest('.qa'),opening=!qa.classList.contains('open');
+      faqSlot.querySelectorAll('.qa.open').forEach(function(el){el.classList.remove('open');el.querySelector('.qa__a').style.height='0';});
+      if(opening){qa.classList.add('open');qa.querySelector('.qa__a').style.height=qa.querySelector('.qa__a-inner').offsetHeight+'px';}
+    });
+  }
+
+  // == PRICING SIMULATOR ==
+  var simSlot=document.querySelector('.sim__slot');
+  if(simSlot){
+    var PLANS=[
+      {id:'vitrine',name:'Vitrine Essentielle',price:890,basePages:3,desc:'Landing page + pages statiques. Pour démarrer avec une présence soignée.',feats:['Design sur-mesure','3 pages incluses','Responsive mobile','Formulaire de contact']},
+      {id:'pro',name:'Site Pro',price:1890,basePages:8,badge:'Populaire',desc:'Site complet avec animations et CMS optionnel. Pour une présence qui marque.',feats:['Tout Vitrine Essentielle','8 pages incluses','Animations soignées','SEO technique inclus']},
+      {id:'custom',name:'Sur-mesure',price:null,basePages:99,desc:'Projet complexe, animations avancées, intégrations spécifiques.',feats:['Animations 3D / WebGL','Intégrations API','Accompagnement complet','Délais prioritaires']}
+    ];
+    var OPTS=[
+      {id:'blog',name:'Blog / Actualités',meta:'Espace édito gérable en autonomie',p:250},
+      {id:'anim',name:'Animations avancées',meta:'Scroll effects, micro-interactions',p:350},
+      {id:'seo',name:'Optimisation SEO',meta:'Audit + contenu + mots-clés cibles',p:200},
+      {id:'maint',name:'Maintenance 3 mois',meta:'Mises à jour, sauvegardes, support',p:180},
+      {id:'logo',name:'Logo & Charte graphique',meta:'Identité visuelle complète',p:490}
+    ];
+    var PP=80,st={plan:'pro',opts:{},pages:8};
+    OPTS.forEach(function(o){st.opts[o.id]=false;});
+    function calc(){
+      var pl=PLANS.find(function(p){return p.id===st.plan;});
+      if(!pl||pl.price===null)return null;
+      return pl.price+Math.max(0,st.pages-pl.basePages)*PP+OPTS.reduce(function(s,o){return s+(st.opts[o.id]?o.p:0);},0);
+    }
+    function fr(n){return n.toLocaleString('fr-FR')+' €';}
+    function upd(){
+      var pl=PLANS.find(function(p){return p.id===st.plan;}),total=calc();
+      var items=[];
+      if(pl){
+        items.push([pl.name,pl.price!==null?fr(pl.price):'contact']);
+        var xp=Math.max(0,st.pages-pl.basePages);
+        if(xp>0)items.push([xp+' page(s) supp.',fr(xp*PP)]);
+      }
+      OPTS.forEach(function(o){if(st.opts[o.id])items.push([o.name,'+'+fr(o.p)]);});
+      var tel=document.querySelector('.sim__total');
+      if(tel){
+        var v=total===null?'Sur devis':'À partir de '+fr(total);
+        if(tel.textContent!==v){tel.classList.remove('bump');void tel.offsetWidth;tel.classList.add('bump');tel.textContent=v;}
+      }
+      var rel=document.querySelector('.sim__recap');
+      if(rel)rel.innerHTML=items.map(function(it,i){return '<li'+(i===0?' class="is-base"':'')+'>'+
+        '<span>'+it[0]+'</span><span>'+it[1]+'</span></li>';}).join('');
+      var po=document.querySelector('.sim__pagesOut');
+      if(po){var xp2=pl?Math.max(0,st.pages-pl.basePages):0;po.textContent=st.pages+' page'+(st.pages>1?'s':'')+(xp2>0?' (+'+xp2+' supp.)':'');}
+      var pg=simSlot.querySelector('.sim__pagesGroup');
+      if(pg)pg.style.opacity=(pl&&pl.price===null)?'0.4':'1';
+    }
+    var planH=PLANS.map(function(p){
+      var b=p.badge?'<span class="plan__badge">'+p.badge+'</span>':'';
+      var pr=p.price!==null?p.price.toLocaleString('fr-FR')+' €':'Contact';
+      return '<label class="opt opt--plan">'+b+'<input type="radio" name="plan" value="'+p.id+'"'+(p.id===st.plan?' checked':'')+'>'+
+        '<span class="opt__box"><span class="plan__head"><span class="opt__name">'+p.name+'</span><span class="opt__price">'+pr+'</span></span>'+
+        '<span class="plan__desc">'+p.desc+'</span>'+
+        '<ul class="plan__list">'+p.feats.map(function(f){return '<li>'+f+'</li>';}).join('')+'</ul></span></label>';
+    }).join('');
+    var optsH=OPTS.map(function(o){
+      return '<label class="opt opt--check"><input type="checkbox" value="'+o.id+'">'+
+        '<span class="opt__box"><span class="opt__main"><span class="opt__name">'+o.name+'</span><span class="opt__meta">'+o.meta+'</span></span>'+
+        '<span class="opt__price">+'+o.p.toLocaleString('fr-FR')+' €</span></span></label>';
+    }).join('');
+    simSlot.innerHTML=
+      '<div class="sim">'+
+        '<div class="sim__options">'+
+          '<fieldset class="sim__group"><legend class="sim__legend"><span class="sim__step">01</span> Formule de base</legend>'+
+          '<div class="sim__choices sim__maintGrid">'+planH+'</div></fieldset>'+
+          '<fieldset class="sim__group"><legend class="sim__legend"><span class="sim__step">02</span> Options à la carte</legend>'+
+          '<div class="sim__choices">'+optsH+'</div></fieldset>'+
+          '<fieldset class="sim__group sim__pagesGroup"><legend class="sim__legend"><span class="sim__step">03</span> Nombre de pages</legend>'+
+          '<div class="sim__pages"><input type="range" class="sim__range" min="1" max="20" value="'+st.pages+'">'+
+          '<output class="sim__pagesOut">'+st.pages+' pages</output></div></fieldset>'+
+        '</div>'+
+        '<aside class="sim__summary"><div class="sim__card">'+
+          '<p class="sim__estimate">ESTIMATION</p>'+
+          '<div class="sim__total">À partir de '+fr(calc())+'</div>'+
+          '<hr>'+
+          '<p class="sim__recapLabel">Récapitulatif</p>'+
+          '<ul class="sim__recap"></ul>'+
+          '<p class="sim__note">Devis gratuit · Sans engagement · Réponse sous 48 h</p>'+
+          '<a class="sim__btn" href="#contact">Obtenir un devis <span class="arw">→</span></a>'+
+        '</div></aside>'+
+      '</div>';
+    upd();
+    simSlot.addEventListener('change',function(e){
+      var el=e.target;
+      if(el.name==='plan'){
+        st.plan=el.value;
+        var pl=PLANS.find(function(p){return p.id===st.plan;});
+        st.pages=pl&&pl.price!==null?pl.basePages:10;
+        var rng=simSlot.querySelector('.sim__range');if(rng)rng.value=st.pages;
+      } else if(el.type==='checkbox'){st.opts[el.value]=el.checked;}
+      else if(el.type==='range'){st.pages=+el.value;}
+      upd();
+    });
+    simSlot.addEventListener('input',function(e){if(e.target.type==='range'){st.pages=+e.target.value;upd();}});
+  }
+})();
+</script>
+
 </body>
 </html>
